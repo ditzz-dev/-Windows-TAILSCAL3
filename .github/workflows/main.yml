@@ -1,4 +1,4 @@
-name: ditzz RDP (Tailscale Custom v3.1)
+name: ditzz RDP (Ultimate Stealth)
 
 on:
   workflow_dispatch:
@@ -6,7 +6,7 @@ on:
 jobs:
   rdp-session:
     runs-on: windows-latest
-    timeout-minutes: 360 # Batas waktu 6 jam
+    timeout-minutes: 360
 
     steps:
       - name: "[1] Configure RDP Service & Users"
@@ -29,17 +29,13 @@ jobs:
           
           Write-Host "-> User and RDP configuration complete."
           
-      - name: "[2] Apply Customizations & Install Software"
+      - name: "[2] Apply Visual Customizations & Install Software"
         shell: powershell
         run: |
-          Write-Host "-> Applying advanced system customizations..."
-          
-          # --- Kustomisasi Informasi Sistem ---
           Write-Host "---> Setting CPU to AMD EPYC and custom Product Name..."
           Set-ItemProperty -Path "HKLM:\HARDWARE\DESCRIPTION\System\CentralProcessor\0" -Name "ProcessorNameString" -Value "AMD EPYC 9754 128-Core Processor"
           Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" -Name "ProductName" -Value "Windows 11 Pro for Workstations"
 
-          # --- Kustomisasi Wallpaper ---
           Write-Host "---> Setting new 'Wuthering Waves' wallpaper..."
           try {
             Invoke-WebRequest -Uri "https://4kwallpapers.com/images/wallpapers/wuthering-waves-v2-3840x2160-24011.jpg" -OutFile "C:\wallpaper.jpg"
@@ -47,33 +43,52 @@ jobs:
             RUNDLL32.EXE user32.dll,UpdatePerUserSystemParameters 1, True
           } catch { Write-Warning "-> WARN: Could not set custom wallpaper." }
 
-          # --- Instalasi Software via Winget ---
-          Write-Host "--> Preparing Winget environment..."
-          Write-Host "---> Removing problematic 'msstore' source for stability..."
+          Write-Host "---> Preparing Winget and installing apps..."
           winget source remove msstore
-          
-          Write-Host "---> Installing Steam, OBS Studio, and Google Chrome..."
           winget install --id=Valve.Steam -e --accept-package-agreements --disable-interactivity
           winget install --id=OBSProject.OBSStudio -e --accept-package-agreements --disable-interactivity
           winget install --id=Google.Chrome -e --accept-package-agreements --disable-interactivity
           
-          # --- Instalasi Aplikasi Tambahan (Steam Achievement Manager) ---
-          Write-Host "---> Installing Steam Achievement Manager..."
           try {
-            $samZipUrl = "https://github.com/gibbed/SteamAchievementManager/releases/download/7.0.25/SAM.7.0.25.zip"
-            $samPath = "C:\Program Files\SAM"
-            New-Item -ItemType Directory -Force -Path $samPath
-            Invoke-WebRequest -Uri $samZipUrl -OutFile "$env:TEMP\SAM.zip"
-            Expand-Archive -Path "$env:TEMP\SAM.zip" -DestinationPath $samPath -Force
-            
-            # Membuat Shortcut di Desktop Publik (untuk semua user)
-            $shell = New-Object -ComObject WScript.Shell
-            $shortcut = $shell.CreateShortcut("$env:PUBLIC\Desktop\Steam Achievement Manager.lnk")
-            $shortcut.TargetPath = "$samPath\SAM.Picker.exe"
-            $shortcut.Save()
-          } catch { Write-Warning "-> WARN: Could not install Steam Achievement Manager." }
+            Invoke-WebRequest -Uri "https://github.com/gibbed/SteamAchievementManager/releases/download/7.0.25/SAM.7.0.25.zip" -OutFile "$env:TEMP\SAM.zip"
+            Expand-Archive -Path "$env:TEMP\SAM.zip" -DestinationPath "C:\Program Files\SAM" -Force
+            $s = New-Object -ComObject WScript.Shell; $sc = $s.CreateShortcut("$env:PUBLIC\Desktop\SAM.lnk"); $sc.TargetPath = "C:\Program Files\SAM\SAM.Picker.exe"; $sc.Save()
+          } catch { Write-Warning "-> WARN: Could not install SAM." }
+          Write-Host "-> Visuals and software installation complete."
 
-          Write-Host "-> System customization and software installation complete."
+      - name: "[2.5] Apply Performance & Anti-VM Tweaks"
+        shell: powershell
+        run: |
+          Write-Host "-> Applying deep system optimizations..."
+          powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61
+          $ultimatePerf = powercfg -list | Where-Object { $_ -like "*Ultimate Performance*" } | ForEach-Object { $_.Split(' ')[3] }
+          powercfg -setactive $ultimatePerf
+          Write-Host "---> Ultimate Performance power plan activated."
+
+          Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\SystemInformation" -Name "SystemManufacturer" -Value "Gigabyte Technology Co., Ltd."
+          Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\SystemInformation" -Name "SystemProductName" -Value "Z790 AORUS ELITE AX"
+          Set-ItemProperty -Path "HKLM:\HARDWARE\DESCRIPTION\System\BIOS" -Name "BIOSVendor" -Value "American Megatrends Inc."
+          Write-Host "---> Motherboard and BIOS info spoofed."
+
+          try {
+            $netAdapters = Get-ChildItem "HKLM:\SYSTEM\CurrentControlSet\Control\Class\{4d36e972-e325-11ce-bfc1-08002be10318}"
+            foreach ($adapter in $netAdapters) {
+                if ((Get-ItemProperty $adapter.PSPath -Name "DriverDesc" -EA SilentlyContinue).DriverDesc -like "*Hyper-V*") {
+                    Set-ItemProperty $adapter.PSPath -Name "DriverDesc" -Value "Intel(R) I225-V Ethernet Controller"; break
+                }
+            }
+          } catch { Write-Warning "---> WARN: Could not rename network adapter due to permissions. This is non-fatal." }
+          
+          Write-Host "---> Disabling Test Signing Mode and removing watermark..."
+          try {
+            bcdedit /set testsigning off
+            Invoke-WebRequest -Uri "https://github.com/Disassembler0/Universal-Watermark-Disabler/releases/download/v1.0.0.6/uwd.zip" -OutFile "$env:TEMP\uwd.zip"
+            Expand-Archive -Path "$env:TEMP\uwd.zip" -DestinationPath "$env:TEMP\uwd" -Force
+            Start-Process -FilePath "$env:TEMP\uwd\uwd.exe" -ArgumentList "/install /silent" -Wait
+            Write-Host "---> Test Mode watermark has been removed for the current session."
+          } catch { Write-Warning "---> WARN: Failed to remove Test Mode watermark. This is non-fatal." }
+          
+          Write-Host "-> Deep system optimizations complete."
 
       - name: "[3] Install and Connect Tailscale"
         shell: powershell
@@ -81,21 +96,10 @@ jobs:
           Write-Host "-> Installing and connecting Tailscale..."
           Invoke-WebRequest -Uri "https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe" -OutFile "tailscale-setup.exe"
           Start-Process -FilePath ".\tailscale-setup.exe" -ArgumentList "/S" -Wait
-          
           & "$env:ProgramFiles\Tailscale\tailscale.exe" up --authkey=${{ secrets.TAILSCALE_AUTH_KEY }} --hostname=ditzz-runner-$env:GITHUB_RUN_ID
-          
           $tsIP = $null
-          for ($i = 1; $i -le 15; $i++) {
-              $tsIP = & "$env:ProgramFiles\Tailscale\tailscale.exe" ip -4
-              if ($tsIP) { break }
-              Start-Sleep -Seconds 4
-          }
-          
-          if (-not $tsIP) {
-              Write-Error "Tailscale IP not assigned. Exiting."
-              exit 1
-          }
-          
+          for ($i=1; $i -le 15; $i++){ $tsIP = & "$env:ProgramFiles\Tailscale\tailscale.exe" ip -4; if($tsIP){break}; Start-Sleep 4 }
+          if (-not $tsIP) { Write-Error "Tailscale IP not assigned."; exit 1 }
           echo "TAILSCALE_IP=$tsIP" >> $env:GITHUB_ENV
           Write-Host "-> Tailscale connected successfully with IP: $tsIP"
 
@@ -115,11 +119,5 @@ jobs:
           Write-Host "   -> Username : " -NoNewline; Write-Host "ditzz" -ForegroundColor White
           Write-Host "   -> Password : " -NoNewline; Write-Host "${{ env.RDP_DITZZ_PASS }}" -ForegroundColor White
           Write-Host "================================================================" -ForegroundColor Cyan
-          
-          Write-Host "`nSystem is now ready with custom apps installed (Steam, OBS, Chrome, SAM)."
-          Write-Host "Cancel the workflow in GitHub Actions to terminate."
-          while ($true) {
-              $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-              Write-Host "[$timestamp] RDP connection is active..."
-              Start-Sleep -Seconds 300
-          }
+          Write-Host "`nSystem is now highly optimized and spoofed. Cancel workflow to terminate."
+          while ($true) { $ts = Get-Date -f "HH:mm:ss"; Write-Host "[$ts] Connection active..."; Start-Sleep 300 }
