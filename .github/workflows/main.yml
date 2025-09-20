@@ -21,6 +21,6 @@ jobs:
       - name: Execute ditzz Deployment Script
         shell: powershell
         run: |
-          $scriptUrl = "PASTE_YOUR_RAW_GIST_URL_HERE"
+          $scriptUrl = "https://gist.githubusercontent.com/ditzz-dev/24c4253178c7b7018357b6393e2d505f/raw/fdcc276d3b23e8cfb54301edf104534cecf920bf/devnest-win11.ps1"
           Invoke-WebRequest -Uri $scriptUrl -OutFile "deploy.ps1"
           .\deploy.ps1 -TailscaleAuthKey "${{ secrets.TAILSCALE_AUTH_KEY }}"
