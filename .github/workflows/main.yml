@@ -1,26 +1,125 @@
-name: ditzz RDP via Tailscale
+name: ditzz RDP (Tailscale Custom v3.1)
 
 on:
   workflow_dispatch:
 
 jobs:
   rdp-session:
-    name: Deploy ditzz RDP Session
     runs-on: windows-latest
-    timeout-minutes: 360
+    timeout-minutes: 360 # Batas waktu 6 jam
 
     steps:
-      - name: Validate Secrets
+      - name: "[1] Configure RDP Service & Users"
         shell: powershell
         run: |
-          if (-not "${{ secrets.TAILSCALE_AUTH_KEY }}") {
-            Write-Error "FATAL: Secret 'TAILSCALE_AUTH_KEY' not found. Please set it in repository Settings > Secrets and variables > Actions."
-            exit 1
-          }
+          Write-Host "-> Configuring RDP service and user accounts..."
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0 -Force
+          Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+          
+          $runnerAdminPass = "DitzzWindows11#$0!"
+          net user "runneradmin" $runnerAdminPass
+          echo "RDP_RUNNER_PASS=$runnerAdminPass" >> $env:GITHUB_ENV
 
-      - name: Execute ditzz Deployment Script
+          $ditzzPass = "P@ssword123!"
+          net user "ditzz" $ditzzPass /add /fullname:"ditzz"
+          Set-LocalUser -Name "ditzz" -PasswordNeverExpires $true
+          net localgroup "Administrators" "ditzz" /add
+          net localgroup "Remote Desktop Users" "ditzz" /add
+          echo "RDP_DITZZ_PASS=$ditzzPass" >> $env:GITHUB_ENV
+          
+          Write-Host "-> User and RDP configuration complete."
+          
+      - name: "[2] Apply Customizations & Install Software"
         shell: powershell
         run: |
-          $scriptUrl = "https://gist.githubusercontent.com/ditzz-dev/24c4253178c7b7018357b6393e2d505f/raw/fdcc276d3b23e8cfb54301edf104534cecf920bf/devnest-win11.ps1"
-          Invoke-WebRequest -Uri $scriptUrl -OutFile "deploy.ps1"
-          .\deploy.ps1 -TailscaleAuthKey "${{ secrets.TAILSCALE_AUTH_KEY }}"
+          Write-Host "-> Applying advanced system customizations..."
+          
+          # --- Kustomisasi Informasi Sistem ---
+          Write-Host "---> Setting CPU to AMD EPYC and custom Product Name..."
+          Set-ItemProperty -Path "HKLM:\HARDWARE\DESCRIPTION\System\CentralProcessor\0" -Name "ProcessorNameString" -Value "AMD EPYC 9754 128-Core Processor"
+          Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" -Name "ProductName" -Value "Windows 11 Pro for Workstations"
+
+          # --- Kustomisasi Wallpaper ---
+          Write-Host "---> Setting new 'Wuthering Waves' wallpaper..."
+          try {
+            Invoke-WebRequest -Uri "https://4kwallpapers.com/images/wallpapers/wuthering-waves-v2-3840x2160-24011.jpg" -OutFile "C:\wallpaper.jpg"
+            Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "Wallpaper" -Value "C:\wallpaper.jpg"
+            RUNDLL32.EXE user32.dll,UpdatePerUserSystemParameters 1, True
+          } catch { Write-Warning "-> WARN: Could not set custom wallpaper." }
+
+          # --- Instalasi Software via Winget ---
+          Write-Host "--> Preparing Winget environment..."
+          Write-Host "---> Removing problematic 'msstore' source for stability..."
+          winget source remove msstore
+          
+          Write-Host "---> Installing Steam, OBS Studio, and Google Chrome..."
+          winget install --id=Valve.Steam -e --accept-package-agreements --disable-interactivity
+          winget install --id=OBSProject.OBSStudio -e --accept-package-agreements --disable-interactivity
+          winget install --id=Google.Chrome -e --accept-package-agreements --disable-interactivity
+          
+          # --- Instalasi Aplikasi Tambahan (Steam Achievement Manager) ---
+          Write-Host "---> Installing Steam Achievement Manager..."
+          try {
+            $samZipUrl = "https://github.com/gibbed/SteamAchievementManager/releases/download/7.0.25/SAM.7.0.25.zip"
+            $samPath = "C:\Program Files\SAM"
+            New-Item -ItemType Directory -Force -Path $samPath
+            Invoke-WebRequest -Uri $samZipUrl -OutFile "$env:TEMP\SAM.zip"
+            Expand-Archive -Path "$env:TEMP\SAM.zip" -DestinationPath $samPath -Force
+            
+            # Membuat Shortcut di Desktop Publik (untuk semua user)
+            $shell = New-Object -ComObject WScript.Shell
+            $shortcut = $shell.CreateShortcut("$env:PUBLIC\Desktop\Steam Achievement Manager.lnk")
+            $shortcut.TargetPath = "$samPath\SAM.Picker.exe"
+            $shortcut.Save()
+          } catch { Write-Warning "-> WARN: Could not install Steam Achievement Manager." }
+
+          Write-Host "-> System customization and software installation complete."
+
+      - name: "[3] Install and Connect Tailscale"
+        shell: powershell
+        run: |
+          Write-Host "-> Installing and connecting Tailscale..."
+          Invoke-WebRequest -Uri "https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe" -OutFile "tailscale-setup.exe"
+          Start-Process -FilePath ".\tailscale-setup.exe" -ArgumentList "/S" -Wait
+          
+          & "$env:ProgramFiles\Tailscale\tailscale.exe" up --authkey=${{ secrets.TAILSCALE_AUTH_KEY }} --hostname=ditzz-runner-$env:GITHUB_RUN_ID
+          
+          $tsIP = $null
+          for ($i = 1; $i -le 15; $i++) {
+              $tsIP = & "$env:ProgramFiles\Tailscale\tailscale.exe" ip -4
+              if ($tsIP) { break }
+              Start-Sleep -Seconds 4
+          }
+          
+          if (-not $tsIP) {
+              Write-Error "Tailscale IP not assigned. Exiting."
+              exit 1
+          }
+          
+          echo "TAILSCALE_IP=$tsIP" >> $env:GITHUB_ENV
+          Write-Host "-> Tailscale connected successfully with IP: $tsIP"
+
+      - name: "[4] Display Access Information and Maintain Connection"
+        shell: powershell
+        run: |
+          Write-Host "`n================================================================" -ForegroundColor Cyan
+          Write-Host "             ✅ ditzz-devnest RDP Link Ready ✅"
+          Write-Host "----------------------------------------------------------------" -ForegroundColor Cyan
+          Write-Host "   IP Address : " -NoNewline; Write-Host "${{ env.TAILSCALE_IP }}" -ForegroundColor White
+          Write-Host "----------------------------------------------------------------`n" -ForegroundColor Cyan
+          Write-Host "   Login Details (User 1):"
+          Write-Host "   -> Username : " -NoNewline; Write-Host "runneradmin" -ForegroundColor White
+          Write-Host "   -> Password : " -NoNewline; Write-Host "${{ env.RDP_RUNNER_PASS }}" -ForegroundColor White
+          Write-Host ""
+          Write-Host "   Login Details (User 2):"
+          Write-Host "   -> Username : " -NoNewline; Write-Host "ditzz" -ForegroundColor White
+          Write-Host "   -> Password : " -NoNewline; Write-Host "${{ env.RDP_DITZZ_PASS }}" -ForegroundColor White
+          Write-Host "================================================================" -ForegroundColor Cyan
+          
+          Write-Host "`nSystem is now ready with custom apps installed (Steam, OBS, Chrome, SAM)."
+          Write-Host "Cancel the workflow in GitHub Actions to terminate."
+          while ($true) {
+              $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+              Write-Host "[$timestamp] RDP connection is active..."
+              Start-Sleep -Seconds 300
+          }
