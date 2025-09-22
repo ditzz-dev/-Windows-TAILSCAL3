@@ -1,7 +1,25 @@
-name: ditzz RDP (Ultimate Stealth)
+name: ditzz RDP (The Ultimate Build)
 
 on:
   workflow_dispatch:
+    inputs:
+      theme:
+        description: 'Pilih tema desktop untuk sesi RDP'
+        required: true
+        type: choice
+        options:
+          - dark
+          - light
+        default: 'dark'
+      install_apps:
+        description: 'Instal aplikasi tambahan (Steam, OBS, Chrome, dll.)?'
+        required: true
+        type: boolean
+        default: true
+      wallpaper_url:
+        description: '(Opsional) Tempel URL gambar (.jpg/.png) untuk wallpaper'
+        required: false
+        default: 'https://4kwallpapers.com/images/wallpapers/wuthering-waves-v2-3840x2160-24011.jpg'
 
 jobs:
   rdp-session:
@@ -9,115 +27,192 @@ jobs:
     timeout-minutes: 360
 
     steps:
-      - name: "[1] Configure RDP Service & Users"
+      - name: " Inisialisasi Alur Kerja"
         shell: powershell
         run: |
-          Write-Host "-> Configuring RDP service and user accounts..."
+          Write-Host ""
+          Write-Host "  =======================================================" -ForegroundColor Green
+          Write-Host "          ditzz Ultimate RDP Workflow (Tailscale)        " -ForegroundColor Green
+          Write-Host "                          v7.0                           " -ForegroundColor Green
+          Write-Host "  =======================================================" -ForegroundColor Green
+          Write-Host ""
+          Write-Host "-> Pilihan Pengguna:" -ForegroundColor Cyan
+          Write-Host "   - Tema          : ${{ inputs.theme }}" -ForegroundColor Yellow
+          Write-Host "   - Instal Aplikasi : ${{ inputs.install_apps }}" -ForegroundColor Yellow
+          Write-Host "   - Wallpaper URL : ${{ inputs.wallpaper_url }}" -ForegroundColor Yellow
+          Write-Host ""
+
+      - name: " ⚙️ Mengonfigurasi Layanan RDP & Pengguna"
+        shell: powershell
+        run: |
+          Write-Host "-> Mengonfigurasi layanan RDP dan akun pengguna..." -ForegroundColor Cyan
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0 -Force
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-          
-          $runnerAdminPass = "DitzzWindows11#$0!"
-          net user "runneradmin" $runnerAdminPass
-          echo "RDP_RUNNER_PASS=$runnerAdminPass" >> $env:GITHUB_ENV
+          $runnerAdminPass = "DitzzWindows11#$0!"; net user "runneradmin" $runnerAdminPass; echo "RDP_RUNNER_PASS=$runnerAdminPass" >> $env:GITHUB_ENV
+          $ditzzPass = "P@ssword123!"; net user "ditzz" $ditzzPass /add /fullname:"ditzz"; Set-LocalUser -Name "ditzz" -PasswordNeverExpires $true; net localgroup "Administrators" "ditzz" /add; net localgroup "Remote Desktop Users" "ditzz" /add; echo "RDP_DITZZ_PASS=$ditzzPass" >> $env:GITHUB_ENV
+          Write-Host "-> Konfigurasi pengguna dan RDP selesai." -ForegroundColor Green
 
-          $ditzzPass = "P@ssword123!"
-          net user "ditzz" $ditzzPass /add /fullname:"ditzz"
-          Set-LocalUser -Name "ditzz" -PasswordNeverExpires $true
-          net localgroup "Administrators" "ditzz" /add
-          net localgroup "Remote Desktop Users" "ditzz" /add
-          echo "RDP_DITZZ_PASS=$ditzzPass" >> $env:GITHUB_ENV
-          
-          Write-Host "-> User and RDP configuration complete."
-          
-      - name: "[2] Apply Visual Customizations & Install Software"
+      - name: " 🧹 Melakukan Debloating & Optimisasi Windows"
         shell: powershell
         run: |
-          Write-Host "---> Setting CPU to AMD EPYC and custom Product Name..."
-          Set-ItemProperty -Path "HKLM:\HARDWARE\DESCRIPTION\System\CentralProcessor\0" -Name "ProcessorNameString" -Value "AMD EPYC 9754 128-Core Processor"
-          Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" -Name "ProductName" -Value "Windows 11 Pro for Workstations"
-
-          Write-Host "---> Setting new 'Wuthering Waves' wallpaper..."
-          try {
-            Invoke-WebRequest -Uri "https://4kwallpapers.com/images/wallpapers/wuthering-waves-v2-3840x2160-24011.jpg" -OutFile "C:\wallpaper.jpg"
-            Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "Wallpaper" -Value "C:\wallpaper.jpg"
-            RUNDLL32.EXE user32.dll,UpdatePerUserSystemParameters 1, True
-          } catch { Write-Warning "-> WARN: Could not set custom wallpaper." }
-
-          Write-Host "---> Preparing Winget and installing apps..."
-          winget source remove msstore
-          winget install --id=Valve.Steam -e --accept-package-agreements --disable-interactivity
-          winget install --id=OBSProject.OBSStudio -e --accept-package-agreements --disable-interactivity
-          winget install --id=Google.Chrome -e --accept-package-agreements --disable-interactivity
-          
-          try {
-            Invoke-WebRequest -Uri "https://github.com/gibbed/SteamAchievementManager/releases/download/7.0.25/SAM.7.0.25.zip" -OutFile "$env:TEMP\SAM.zip"
-            Expand-Archive -Path "$env:TEMP\SAM.zip" -DestinationPath "C:\Program Files\SAM" -Force
-            $s = New-Object -ComObject WScript.Shell; $sc = $s.CreateShortcut("$env:PUBLIC\Desktop\SAM.lnk"); $sc.TargetPath = "C:\Program Files\SAM\SAM.Picker.exe"; $sc.Save()
-          } catch { Write-Warning "-> WARN: Could not install SAM." }
-          Write-Host "-> Visuals and software installation complete."
-
-      - name: "[2.5] Apply Performance & Anti-VM Tweaks"
-        shell: powershell
-        run: |
-          Write-Host "-> Applying deep system optimizations..."
+          Write-Host "-> Memulai debloating dan penerapan tweak sistem..." -ForegroundColor Cyan
+          Write-Host "---> Menghapus aplikasi bawaan (bloatware)..." -ForegroundColor Yellow
+          Get-AppxPackage *Microsoft.People* | Remove-AppxPackage -ErrorAction SilentlyContinue
+          Get-AppxPackage *Microsoft.Wallet* | Remove-AppxPackage -ErrorAction SilentlyContinue
+          Get-AppxPackage *Microsoft.ZuneMusic* | Remove-AppxPackage -ErrorAction SilentlyContinue
+          Get-AppxPackage *Microsoft.ZuneVideo* | Remove-AppxPackage -ErrorAction SilentlyContinue
+          Get-AppxPackage *Microsoft.XboxApp* | Remove-AppxPackage -ErrorAction SilentlyContinue
+          Get-AppxPackage *Microsoft.YourPhone* | Remove-AppxPackage -ErrorAction SilentlyContinue
+          Get-AppxPackage *Microsoft.WindowsFeedbackHub* | Remove-AppxPackage -ErrorAction SilentlyContinue
+          Get-AppxPackage *Microsoft.GetHelp* | Remove-AppxPackage -ErrorAction SilentlyContinue
+          Write-Host "---> Menonaktifkan layanan telemetri..." -ForegroundColor Yellow
+          Set-Service -Name "DiagTrack" -StartupType Disabled
+          Set-Service -Name "dmwappushservice" -StartupType Disabled
+          Write-Host "---> Mengaktifkan Power Plan 'Ultimate Performance'..." -ForegroundColor Yellow
           powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61
-          $ultimatePerf = powercfg -list | Where-Object { $_ -like "*Ultimate Performance*" } | ForEach-Object { $_.Split(' ')[3] }
-          powercfg -setactive $ultimatePerf
-          Write-Host "---> Ultimate Performance power plan activated."
+          $up = powercfg -list | ? {$_ -like "*Ultimate*"} | % {$_.Split(' ')}
+          powercfg -setactive $up
+          Write-Host "---> Menonaktifkan akselerasi mouse..." -ForegroundColor Yellow
+          Set-ItemProperty -Path "HKCU:\Control Panel\Mouse" -Name "MouseSpeed" -Value "0"
+          Set-ItemProperty -Path "HKCU:\Control Panel\Mouse" -Name "MouseThreshold1" -Value "0"
+          Set-ItemProperty -Path "HKCU:\Control Panel\Mouse" -Name "MouseThreshold2" -Value "0"
+          Write-Host "-> Sistem berhasil dioptimalkan." -ForegroundColor Green
 
-          Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\SystemInformation" -Name "SystemManufacturer" -Value "Gigabyte Technology Co., Ltd."
-          Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\SystemInformation" -Name "SystemProductName" -Value "Z790 AORUS ELITE AX"
-          Set-ItemProperty -Path "HKLM:\HARDWARE\DESCRIPTION\System\BIOS" -Name "BIOSVendor" -Value "American Megatrends Inc."
-          Write-Host "---> Motherboard and BIOS info spoofed."
-
-          try {
-            $netAdapters = Get-ChildItem "HKLM:\SYSTEM\CurrentControlSet\Control\Class\{4d36e972-e325-11ce-bfc1-08002be10318}"
-            foreach ($adapter in $netAdapters) {
-                if ((Get-ItemProperty $adapter.PSPath -Name "DriverDesc" -EA SilentlyContinue).DriverDesc -like "*Hyper-V*") {
-                    Set-ItemProperty $adapter.PSPath -Name "DriverDesc" -Value "Intel(R) I225-V Ethernet Controller"; break
-                }
-            }
-          } catch { Write-Warning "---> WARN: Could not rename network adapter due to permissions. This is non-fatal." }
-          
-          Write-Host "---> Disabling Test Signing Mode and removing watermark..."
-          try {
-            bcdedit /set testsigning off
-            Invoke-WebRequest -Uri "https://github.com/Disassembler0/Universal-Watermark-Disabler/releases/download/v1.0.0.6/uwd.zip" -OutFile "$env:TEMP\uwd.zip"
-            Expand-Archive -Path "$env:TEMP\uwd.zip" -DestinationPath "$env:TEMP\uwd" -Force
-            Start-Process -FilePath "$env:TEMP\uwd\uwd.exe" -ArgumentList "/install /silent" -Wait
-            Write-Host "---> Test Mode watermark has been removed for the current session."
-          } catch { Write-Warning "---> WARN: Failed to remove Test Mode watermark. This is non-fatal." }
-          
-          Write-Host "-> Deep system optimizations complete."
-
-      - name: "[3] Install and Connect Tailscale"
+      - name: " 🎨 Menerapkan Tema, Wallpaper & Anti-VM"
         shell: powershell
         run: |
-          Write-Host "-> Installing and connecting Tailscale..."
+          Write-Host "-> Menerapkan personalisasi dan tweak anti-VM..." -ForegroundColor Cyan
+          if ('${{ inputs.theme }}' -eq 'dark') {
+            Write-Host "---> Mengatur tema ke Mode Gelap (Dark)..." -ForegroundColor Yellow
+            Set-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize' -Name 'AppsUseLightTheme' -Value 0 -Type DWord -Force
+            Set-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize' -Name 'SystemUsesLightTheme' -Value 0 -Type DWord -Force
+          } else {
+            Write-Host "---> Mengatur tema ke Mode Terang (Light)..." -ForegroundColor Yellow
+            Set-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize' -Name 'AppsUseLightTheme' -Value 1 -Type DWord -Force
+            Set-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize' -Name 'SystemUsesLightTheme' -Value 1 -Type DWord -Force
+          }
+
+          if ('${{ inputs.wallpaper_url }}') {
+            Write-Host "---> Mengunduh dan mengatur wallpaper kustom..." -ForegroundColor Yellow
+            try { Invoke-WebRequest "${{ inputs.wallpaper_url }}" -O C:\wallpaper.jpg; Set-ItemProperty "HKCU:\Control Panel\Desktop" Wallpaper "C:\wallpaper.jpg"; RUNDLL32.EXE user32.dll,UpdatePerUserSystemParameters 1, True } catch { Write-Warning "-> GAGAL: Tidak dapat mengatur wallpaper dari URL yang diberikan."}
+          }
+
+          Write-Host "---> Menerapkan spoofing info sistem (Anti-VM)..." -ForegroundColor Yellow
+          Set-ItemProperty "HKLM:\HARDWARE\DESCRIPTION\System\CentralProcessor\0" "ProcessorNameString" "AMD EPYC 9754 128-Core Processor"
+          Set-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" "ProductName" "Windows 11 Pro for Workstations"
+          try { bcdedit /set testsigning off; Invoke-WebRequest "https://github.com/Disassembler0/Universal-Watermark-Disabler/releases/download/v1.0.0.6/uwd.zip" -O "$env:TEMP\uwd.zip"; Expand-Archive "$env:TEMP\uwd.zip" "$env:TEMP\uwd" -F; & "$env:TEMP\uwd\uwd.exe" /install /silent } catch { Write-Warning "-> GAGAL: Tidak dapat menghapus watermark."}
+          Write-Host "-> Personalisasi selesai." -ForegroundColor Green
+          
+      - name: " 📦 Menginstal Aplikasi Inti"
+        if: success() && inputs.install_apps == 'true'
+        shell: powershell
+        run: |
+          Write-Host "-> Memulai instalasi aplikasi inti..." -ForegroundColor Cyan
+          winget source remove msstore
+          winget source update
+          Write-Host "---> Menginstal Google Chrome..." -ForegroundColor Yellow
+          winget install --id=Google.Chrome -e --accept-package-agreements --disable-interactivity
+          Write-Host "---> Menginstal Steam..." -ForegroundColor Yellow
+          winget install --id=Valve.Steam -e --accept-package-agreements --disable-interactivity
+          Write-Host "---> Menginstal OBS Studio..." -ForegroundColor Yellow
+          winget install --id=OBSProject.OBSStudio -e --accept-package-agreements --disable-interactivity
+          Write-Host "---> Menginstal Steam Achievement Manager..." -ForegroundColor Yellow
+          try { Invoke-WebRequest "https://github.com/gibbed/SteamAchievementManager/releases/download/7.0.25/SAM.7.0.25.zip" -O "$env:TEMP\SAM.zip"; Expand-Archive "$env:TEMP\SAM.zip" "C:\Program Files\SAM" -F; $s=New-Object -ComObject WScript.Shell; $sc=$s.CreateShortcut("$env:PUBLIC\Desktop\SAM.lnk"); $sc.TargetPath="C:\Program Files\SAM\SAM.Picker.exe"; $sc.Save() } catch {}
+          Write-Host "-> Instalasi aplikasi inti selesai." -ForegroundColor Green
+
+      - name: " 🧩 Menginstal Aplikasi Opsional & Mengonfigurasi OBS"
+        if: success() && inputs.install_apps == 'true'
+        shell: powershell
+        run: |
+          Write-Host "-> Memulai instalasi aplikasi opsional..." -ForegroundColor Cyan
+          try {
+            Write-Host "---> Menginstal Google Drive..." -ForegroundColor Yellow
+            winget install --id=Google.GoogleDrive -e --accept-package-agreements --disable-interactivity
+          } catch {
+            Write-Warning "-> GAGAL: Google Drive tidak dapat diinstal."
+          }
+          try {
+            Write-Host "---> Menginstal Rainmeter & skin Mond..." -ForegroundColor Yellow
+            winget install --id=Rainmeter.Rainmeter -e --accept-package-agreements --disable-interactivity
+            Invoke-WebRequest -Uri "https://github.com/raiguard/Mond/releases/download/v3.4.0/Mond.v3.4.0.rmskin" -OutFile "$env:TEMP\Mond.rmskin"
+            Start-Process -FilePath "C:\Program Files\Rainmeter\Rainmeter.exe" -ArgumentList '!Install', '"$env:TEMP\Mond.rmskin"' -Wait
+          } catch {
+            Write-Warning "-> GAGAL: Rainmeter tidak dapat diinstal."
+          }
+
+          Write-Host "-> Menerapkan profil OBS ringan..." -ForegroundColor Cyan
+          $obsProfileDir = "$env:APPDATA\obs-studio\basic\profiles\Untitled"
+          New-Item -ItemType Directory -Force -Path $obsProfileDir
+          $obsConfig = @'
+          [General]
+          Name=Untitled
+          [Video]
+          BaseCX=1920
+          BaseCY=1080
+          OutputCX=1280
+          OutputCY=720
+          FPSCommon=30
+          [Output]
+          Mode=Simple
+          StreamEncoder=x264
+          RecFormat=mkv
+          RecQuality=Small
+          RecEncoder=x264
+          [AdvOut]
+          RecPreset=ultrafast
+          RecBitrate=2500
+          '@
+          $obsConfig | Out-File -FilePath "$obsProfileDir\basic.ini" -Encoding utf8
+          Write-Host "-> Penyiapan fitur selesai." -ForegroundColor Green
+
+      - name: " 🌐 Menghubungkan ke Jaringan Tailscale"
+        shell: powershell
+        run: |
+          Write-Host "-> Menginstal dan menghubungkan Tailscale..." -ForegroundColor Cyan
           Invoke-WebRequest -Uri "https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe" -OutFile "tailscale-setup.exe"
           Start-Process -FilePath ".\tailscale-setup.exe" -ArgumentList "/S" -Wait
           & "$env:ProgramFiles\Tailscale\tailscale.exe" up --authkey=${{ secrets.TAILSCALE_AUTH_KEY }} --hostname=ditzz-runner-$env:GITHUB_RUN_ID
-          $tsIP = $null
-          for ($i=1; $i -le 15; $i++){ $tsIP = & "$env:ProgramFiles\Tailscale\tailscale.exe" ip -4; if($tsIP){break}; Start-Sleep 4 }
-          if (-not $tsIP) { Write-Error "Tailscale IP not assigned."; exit 1 }
+          $tsIP = $null; for ($i=1; $i -le 15; $i++){ $tsIP = & "$env:ProgramFiles\Tailscale\tailscale.exe" ip -4; if($tsIP){break}; Write-Host "Menunggu IP Tailscale... (coba lagi ke-$i)" -ForegroundColor Yellow; Start-Sleep 4 }; if (-not $tsIP) { Write-Error "Gagal mendapatkan IP Tailscale."; exit 1 }
           echo "TAILSCALE_IP=$tsIP" >> $env:GITHUB_ENV
-          Write-Host "-> Tailscale connected successfully with IP: $tsIP"
+          Write-Host "-> Tailscale berhasil terhubung dengan IP: $tsIP" -ForegroundColor Green
 
-      - name: "[4] Display Access Information and Maintain Connection"
+      - name: " ✨ Membuat Ringkasan & Menjaga Koneksi"
         shell: powershell
         run: |
-          Write-Host "`n================================================================" -ForegroundColor Cyan
-          Write-Host "             ✅ ditzz-devnest RDP Link Ready ✅"
-          Write-Host "----------------------------------------------------------------" -ForegroundColor Cyan
-          Write-Host "   IP Address : " -NoNewline; Write-Host "${{ env.TAILSCALE_IP }}" -ForegroundColor White
-          Write-Host "----------------------------------------------------------------`n" -ForegroundColor Cyan
-          Write-Host "   Login Details (User 1):"
-          Write-Host "   -> Username : " -NoNewline; Write-Host "runneradmin" -ForegroundColor White
-          Write-Host "   -> Password : " -NoNewline; Write-Host "${{ env.RDP_RUNNER_PASS }}" -ForegroundColor White
-          Write-Host ""
-          Write-Host "   Login Details (User 2):"
-          Write-Host "   -> Username : " -NoNewline; Write-Host "ditzz" -ForegroundColor White
-          Write-Host "   -> Password : " -NoNewline; Write-Host "${{ env.RDP_DITZZ_PASS }}" -ForegroundColor White
-          Write-Host "================================================================" -ForegroundColor Cyan
-          Write-Host "`nSystem is now highly optimized and spoofed. Cancel workflow to terminate."
-          while ($true) { $ts = Get-Date -f "HH:mm:ss"; Write-Host "[$ts] Connection active..."; Start-Sleep 300 }
+          $appStatus = "Aplikasi tambahan tidak diinstal sesuai pilihan."
+          if ('${{ inputs.install_apps }}' -eq 'true') {
+              $appStatus = "Steam, OBS, Chrome, dll. telah diinstal."
+          }
+
+          $summary = @"
+          # ✅ ditzz RDP v7 Telah Siap!
+          
+          Sesi RDP berperforma tinggi Anda telah dikonfigurasi dan online.
+          
+          ---
+          
+          ### 🖥️ Detail Akses
+          
+          | Properti      | Nilai                               |
+          |---------------|-------------------------------------|
+          | **Alamat IP** | `${{ env.TAILSCALE_IP }}`              |
+          | **Username 1**| `runneradmin`                       |
+          | **Password 1**| `${{ env.RDP_RUNNER_PASS }}`         |
+          | **Username 2**| `ditzz`                             |
+          | **Password 2**| `${{ env.RDP_DITZZ_PASS }}`         |
+          
+          ---
+          
+          ### ✨ Fitur & Status
+          
+          - **Tema Desktop:** `${{ inputs.theme }}`
+          - **Status Aplikasi:** `$appStatus`
+          - **Kinerja Maksimal:** Power plan Ultimate dan tweak mouse diaktifkan.
+          - **Mode Siluman:** Info sistem disamarkan untuk menghindari deteksi VM.
+          
+          *Sesi ini akan tetap aktif hingga 6 jam. Untuk menghentikan, batalkan alur kerja di GitHub Actions.*
+          "@
+          echo $summary >> $env:GITHUB_STEP_SUMMARY
+          
+          Write-Host "`n✅ Semua langkah selesai. RDP aktif. Lihat tab Ringkasan (Summary) untuk kredensial." -ForegroundColor Green
+          while ($true) { $ts = Get-Date -f "HH:mm:ss"; Write-Host "[$ts] Koneksi aktif... Menjaga sesi tetap berjalan." -ForegroundColor Gray; Start-Sleep 300 }
