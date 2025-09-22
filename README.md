@@ -6,8 +6,7 @@
     <img src="https://img.shields.io/badge/Version-v7.3-blue?style=for-the-badge">
     <img src="https://img.shields.io/badge/Platform-Windows-0078D6?style=for-the-badge&logo=windows">
     <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge">
-    <img src="https://github.com/ditzz-dev/Windows-11-Ultimate-RDP/actions/workflows/main.yml/badge.svg">
-</p>
+    </p>
 
 This isn't just a script; it's a fully automated platform for deploying a high-performance, customizable Windows 11 RDP session directly from GitHub Actions, secured via Tailscale.
 
