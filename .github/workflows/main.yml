@@ -1,4 +1,4 @@
-name: ditzz RDP (The Ultimate Build)
+name: Windows 11 Ultimate RDP
 
 on:
   workflow_dispatch:
@@ -27,13 +27,13 @@ jobs:
     timeout-minutes: 360
 
     steps:
-      - name: " Inisialisasi Alur Kerja"
+      - name: "🚀 Inisialisasi Alur Kerja"
         shell: powershell
         run: |
           Write-Host ""
           Write-Host "  =======================================================" -ForegroundColor Green
-          Write-Host "          ditzz Ultimate RDP Workflow (Tailscale)        " -ForegroundColor Green
-          Write-Host "                          v7.0                           " -ForegroundColor Green
+          Write-Host "              Windows 11 Ultimate RDP (ditzz)            " -ForegroundColor Green
+          Write-Host "                      The v7.3 Update                      " -ForegroundColor Green
           Write-Host "  =======================================================" -ForegroundColor Green
           Write-Host ""
           Write-Host "-> Pilihan Pengguna:" -ForegroundColor Cyan
@@ -48,7 +48,9 @@ jobs:
           Write-Host "-> Mengonfigurasi layanan RDP dan akun pengguna..." -ForegroundColor Cyan
           Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0 -Force
           Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-          $runnerAdminPass = "DitzzWindows11#$0!"; net user "runneradmin" $runnerAdminPass; echo "RDP_RUNNER_PASS=$runnerAdminPass" >> $env:GITHUB_ENV
+          
+          $runnerAdminPass = "DitzzRDP2025"; net user "runneradmin" $runnerAdminPass; echo "RDP_RUNNER_PASS=$runnerAdminPass" >> $env:GITHUB_ENV
+          
           $ditzzPass = "P@ssword123!"; net user "ditzz" $ditzzPass /add /fullname:"ditzz"; Set-LocalUser -Name "ditzz" -PasswordNeverExpires $true; net localgroup "Administrators" "ditzz" /add; net localgroup "Remote Desktop Users" "ditzz" /add; echo "RDP_DITZZ_PASS=$ditzzPass" >> $env:GITHUB_ENV
           Write-Host "-> Konfigurasi pengguna dan RDP selesai." -ForegroundColor Green
 
@@ -70,9 +72,9 @@ jobs:
           Set-Service -Name "dmwappushservice" -StartupType Disabled
           Write-Host "---> Mengaktifkan Power Plan 'Ultimate Performance'..." -ForegroundColor Yellow
           powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61
-          $up = powercfg -list | ? {$_ -like "*Ultimate*"} | % {$_.Split(' ')}
-          powercfg -setactive $up
-          Write-Host "---> Menonaktifkan akselerasi mouse..." -ForegroundColor Yellow
+          $upGuid = (powercfg -list | Where-Object { $_ -like "*Ultimate*" }).Split(' ')[3]
+          powercfg -setactive $upGuid
+          Write-Host "---> Menonaktifkan akselerasi mouse untuk presisi maksimal..." -ForegroundColor Yellow
           Set-ItemProperty -Path "HKCU:\Control Panel\Mouse" -Name "MouseSpeed" -Value "0"
           Set-ItemProperty -Path "HKCU:\Control Panel\Mouse" -Name "MouseThreshold1" -Value "0"
           Set-ItemProperty -Path "HKCU:\Control Panel\Mouse" -Name "MouseThreshold2" -Value "0"
@@ -91,12 +93,10 @@ jobs:
             Set-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize' -Name 'AppsUseLightTheme' -Value 1 -Type DWord -Force
             Set-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize' -Name 'SystemUsesLightTheme' -Value 1 -Type DWord -Force
           }
-
           if ('${{ inputs.wallpaper_url }}') {
             Write-Host "---> Mengunduh dan mengatur wallpaper kustom..." -ForegroundColor Yellow
             try { Invoke-WebRequest "${{ inputs.wallpaper_url }}" -O C:\wallpaper.jpg; Set-ItemProperty "HKCU:\Control Panel\Desktop" Wallpaper "C:\wallpaper.jpg"; RUNDLL32.EXE user32.dll,UpdatePerUserSystemParameters 1, True } catch { Write-Warning "-> GAGAL: Tidak dapat mengatur wallpaper dari URL yang diberikan."}
           }
-
           Write-Host "---> Menerapkan spoofing info sistem (Anti-VM)..." -ForegroundColor Yellow
           Set-ItemProperty "HKLM:\HARDWARE\DESCRIPTION\System\CentralProcessor\0" "ProcessorNameString" "AMD EPYC 9754 128-Core Processor"
           Set-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" "ProductName" "Windows 11 Pro for Workstations"
@@ -139,7 +139,6 @@ jobs:
           } catch {
             Write-Warning "-> GAGAL: Rainmeter tidak dapat diinstal."
           }
-
           Write-Host "-> Menerapkan profil OBS ringan..." -ForegroundColor Cyan
           $obsProfileDir = "$env:APPDATA\obs-studio\basic\profiles\Untitled"
           New-Item -ItemType Directory -Force -Path $obsProfileDir
@@ -183,11 +182,10 @@ jobs:
           if ('${{ inputs.install_apps }}' -eq 'true') {
               $appStatus = "Steam, OBS, Chrome, dll. telah diinstal."
           }
-
           $summary = @"
-          # ✅ ditzz RDP v7 Telah Siap!
+          # ✅ Windows 11 Ultimate RDP Anda Siap!
           
-          Sesi RDP berperforma tinggi Anda telah dikonfigurasi dan online.
+          Sesi berperforma tinggi Anda telah berhasil dibuat dan online.
           
           ---
           
@@ -203,7 +201,7 @@ jobs:
           
           ---
           
-          ### ✨ Fitur & Status
+          ### ✨ Konfigurasi Sesi
           
           - **Tema Desktop:** `${{ inputs.theme }}`
           - **Status Aplikasi:** `$appStatus`
