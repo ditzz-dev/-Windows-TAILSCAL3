@@ -1,60 +1,81 @@
-# 🚀 ditzz Ultimate RDP Workflow - Selamat Datang di Versi 7!
+<p align="center">
+  <img src="https://capsule-render.vercel.app/api?type=slice&color=gradient&height=250&section=header&text=Windows%2011%20Ultimate%20RDP&fontSize=60&fontAlignY=40" />
+</p>
 
-Lupakan semua yang Anda tahu tentang versi sebelumnya. Ini bukan sekadar pembaruan; ini adalah **lompatan kuantum**. Dari skrip v4 yang fungsional namun kaku, kita telah berevolusi menjadi sebuah platform RDP dinamis yang memberikan **kendali penuh** di tangan Anda.
+<p align="center">
+    <img src="https://img.shields.io/badge/Version-v7.3-blue?style=for-the-badge">
+    <img src="https://img.shields.io/badge/Platform-Windows-0078D6?style=for-the-badge&logo=windows">
+    <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge">
+    <img src="https://github.com/ditzz-dev/Windows-11-Ultimate-RDP/actions/workflows/main.yml/badge.svg">
+</p>
 
-Versi 7 mengubah alur kerja ini dari sekadar "skrip" menjadi "layanan pribadi" Anda untuk membuat lingkungan Windows berperforma tinggi sesuai permintaan, tepat seperti yang Anda inginkan, setiap saat.
-
----
-
-## 🔥 Evolusi dari v4 ke v7: Sebuah Lompatan Besar
-
-Jika Anda datang dari versi lama, Anda akan merasakan perbedaannya secara dramatis. Mari kita lihat perubahannya:
-
-| Fitur | Versi Lama (v4.x & Sebelumnya) | ✨ Versi 7 (Revolusioner) ✨ |
-| :--- | :--- | :--- |
-| **Konektivitas** | Ngrok (TCP Tunneling publik) | **Tailscale** (Jaringan pribadi P2P yang aman & stabil) |
-| **Kustomisasi** | Statis. Harus edit kode untuk ganti wallpaper/spek. | **Sepenuhnya Dinamis!** Pilih tema, aplikasi & wallpaper dari menu. |
-| **Instalasi Software** | Tidak ada. Hanya OS Windows kosong. | **Otomatis!** Pilih untuk menginstal Steam, OBS, Chrome, dll. |
-| **Keamanan** | Password di-set di dalam kode (kurang aman). | **Sangat Aman.** Menggunakan GitHub Secrets & kata sandi dibuat otomatis. |
-| **Pengalaman Pengguna**| Log teks biasa. Info koneksi di akhir log. | **Antarmuka Keren.** Log berwarna, header bergaya & **halaman ringkasan** rapi. |
-| **Fleksibilitas** | Satu ukuran untuk semua. | **Dibuat Sesuai Pesanan.** Butuh sesi ringan tanpa aplikasi? Bisa. Butuh workstation lengkap? Siap! |
+This isn't just a script; it's a fully automated platform for deploying a high-performance, customizable Windows 11 RDP session directly from GitHub Actions, secured via Tailscale.
 
 ---
 
-## ✨ Fitur Unggulan Versi 7
+## 🔥 The Ultimate Leap: From v4 to v7
 
--   **Kendalikan Sesi Anda:** Dengan input `workflow_dispatch`, Anda adalah sutradaranya. Tentukan tema, aplikasi, dan wallpaper bahkan sebelum sesi dimulai.
--   **Konektivitas Tingkat Lanjut dengan Tailscale:** Ucapkan selamat tinggal pada alamat Ngrok yang canggung. Dapatkan IP pribadi yang stabil dan koneksi yang lebih aman serta andal.
--   **Pilih Arsenal Digital Anda:** Cukup centang sebuah kotak untuk menginstal perangkat lunak penting secara otomatis—Steam, OBS Studio, Google Chrome, dan lainnya—diinstal dengan rapi melalui `winget`.
--   **Bangun Desktop Impian Anda:** Tempelkan URL gambar apa pun dan saksikan desktop RDP Anda hidup dengan wallpaper pilihan Anda, secara otomatis.
--   **Kinerja Brutal, Otomatis:** Debloating cerdas, aktivasi Power Plan "Ultimate Performance", dan tweak mouse kini menjadi standar untuk memastikan sesi Anda responsif dan gegas.
--   **Mode Siluman (Stealth Mode) Disempurnakan:** Penyamaran info sistem yang lebih baik untuk membantu melewati deteksi lingkungan virtual yang ketat.
+This version represents a quantum leap from its predecessors. We've moved from a rigid script to a dynamic, user-controlled platform.
 
-## 🚀 Cara Menggunakan (Lebih Mudah Dari Sebelumnya)
+| Feature             | Old Era (v4 & Below)               | ✨ **The Ultimate Era (v7)** ✨          |
+| :------------------ | :--------------------------------- | :--------------------------------------- |
+| **Connectivity**    | Ngrok (Public, less stable)        | **Tailscale** (Secure, private P2P)      |
+| **Customization**   | Static (Required code edits)       | **Fully Dynamic** (Choose theme, apps, wallpaper via UI) |
+| **Software**        | Bare OS                            | **Automated Installation** (Steam, OBS, Chrome, etc.) |
+| **User Experience** | Plain text logs                    | **Rich UI** (Colored logs & a clean Summary page) |
+| **Performance**     | Standard OS                        | **Performance-Tuned** (Debloated, optimized power plan) |
 
-1.  **Fork Repositori Ini:** Jadikan mahakarya ini milik Anda.
-2.  **Dapatkan Kunci Autentikasi Tailscale:**
-    *   Masuk ke [dasbor Admin Tailscale](https://login.tailscale.com/admin/settings/keys) Anda.
-    *   Buat **Auth key** baru (disarankan `Reusable` dan `Ephemeral`).
-    *   **Salin kunci tersebut.** Anda hanya akan melihatnya sekali!
-3.  **Atur GitHub Secret:**
-    *   Di repositori hasil fork Anda, buka **Settings > Secrets and variables > Actions**.
-    *   Buat secret baru bernama `TAILSCALE_AUTH_KEY` dan tempelkan kunci Tailscale Anda.
-4.  **Jalankan Keajaiban:**
-    *   Buka tab **Actions**.
-    *   Pilih **ditzz RDP (The Ultimate Build)** dan klik **Run workflow**.
-    *   **Ini bagian terbaiknya:** Sebuah menu akan muncul!
-        *   Pilih tema **Dark** atau **Light**.
-        *   Tentukan apakah Anda ingin **menginstal aplikasi tambahan**.
-        *   Tempelkan **URL wallpaper** favorit Anda.
-    *   Klik **Run workflow** untuk memulai penciptaan!
-5.  **Hubungkan & Nikmati:**
-    *   Dalam beberapa menit, buka tab **Summary** dari alur kerja yang berjalan.
-    *   Semua detail akses (IP Tailscale, Username, Password) disajikan dengan indah, siap untuk Anda gunakan.
+---
 
-## ⚠️ Peringatan Penting
+## ✨ Core Features
 
--   Ini adalah lingkungan sementara (ephemeral). **JANGAN SIMPAN DATA PENTING DI SINI.** Sesi akan hancur total saat alur kerja selesai.
--   Gunakan kekuatan ini dengan bertanggung jawab dan patuhi Ketentuan Layanan GitHub.
+-   🚀 **Instant Deployment**: Get a powerful Windows environment running in minutes.
+-   🔒 **Secure & Stable Connectivity**: Powered by Tailscale for a private, peer-to-peer connection. No public IPs, no open ports.
+-   🎨 **Deep Customization**: Use the `workflow_dispatch` menu to choose your theme, install optional apps, and set a custom wallpaper from any URL.
+-   ⚡ **Performance-Tuned**: Automatically debloats Windows, activates the "Ultimate Performance" power plan, and disables mouse acceleration for maximum responsiveness.
+-   🕵️ **Stealth Mode**: System information is spoofed to help bypass common VM detection mechanisms.
 
-Ini bukan lagi sekadar alat. Ini adalah pengalaman. Selamat menikmati kebebasan dan kekuatan **ditzz Ultimate RDP Workflow v7**!
+---
+
+## 🚀 Quick Start Guide
+
+Follow these steps to deploy your own Ultimate RDP session.
+
+### 1. Fork the Repository
+Click the **Fork** button at the top-right of this page to create your own copy.
+
+### 2. Get Your Tailscale Auth Key
+-   Navigate to your [Tailscale Admin Console > Auth Keys](https://login.tailscale.com/admin/settings/keys).
+-   Click **Generate auth key...**
+-   Make the key `Reusable` and `Ephemeral`.
+-   **Copy the generated key**. You will only see it once!
+
+### 3. Create a GitHub Secret
+-   In your forked repository, go to **Settings > Secrets and variables > Actions**.
+-   Click **New repository secret**.
+-   Name the secret **`TAILSCALE_AUTH_KEY`**.
+-   Paste your Tailscale auth key into the `Secret` field.
+
+### 4. Run the Workflow
+-   Go to the **Actions** tab in your repository.
+-   Select **Windows 11 Ultimate RDP** from the sidebar and click **Run workflow**.
+-   **This is your command center:**
+    -   Choose your preferred theme.
+    -   Decide whether to install extra applications.
+    -   Optionally, paste an image URL for your wallpaper.
+-   Click the green **Run workflow** button.
+
+### 5. Connect via RDP
+-   Wait for the workflow to complete the setup steps (usually 3-5 minutes).
+-   Go to the **Summary** page of the running workflow.
+-   All your access details (Tailscale IP, Usernames, Passwords) will be displayed there, ready to use.
+
+---
+
+## ⚠️ Important Disclaimer
+
+This is an **ephemeral environment**. The virtual machine and all its data will be **permanently destroyed** when the workflow is canceled or finishes its 6-hour runtime.
+
+**DO NOT STORE ANY CRITICAL OR SENSITIVE DATA IN THE SESSION.**
+
+This project is for educational and experimental purposes. Please use GitHub's resources responsibly and in accordance with their terms of service.
